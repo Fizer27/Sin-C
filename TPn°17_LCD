@@ -1,1 +1,15 @@
+#include <LiquidCrystal.h> // La librairie pour l'écran
+// On initialise avec l'écran avec les pins pour lequel on l'a branché
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+void setup() {
+ // On définit le nombre de ligne et colonne de l'écran.
+ lcd.begin(16, 2);
+ // On affiche le message
+ lcd.print("Bon_Jour !");
+}
+void loop() {
+ // On met le curseur à la colonne 0 ligne 1
+ lcd.setCursor(0, 1);
+}
 
