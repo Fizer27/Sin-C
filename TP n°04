@@ -1,0 +1,215 @@
+#include <TimerOne.h> 
+#include "TM1637.h" //librairie du driver du 7 segments
+#define ON 1
+#define OFF 0
+#define hhmm 01 //0 pour afficher HH:MM et 1 pour MM:SS
+int8_t TimeDisp[] = {0x00,0x00,0x00,0x00}; //Tableau des 4 chiffres
+unsigned char ClockPoint = 1;
+unsigned char Update;
+unsigned char halfsecond = 0;
+unsigned char second;
+unsigned char minute = 0;
+unsigned char hour = 12; //Heure 12:00:00 pour initialiser
+// branchement I2C sur CLK -> pinA5 et DIO -->Pin A4
+#define CLK A5
+#define DIO A4 //3
+TM1637 tm1637(CLK,DIO); //Objet tm1637
+void setup()
+{
+ tm1637.set();
+ tm1637.set(7); //0 éclairage faible réglable jusqu'à 7 le plus intense
+ tm1637.init(); //Initialisation du driver
+ 
+ //Affichage de départ ABCD (le module peut afficher abcdef)
+ TimeDisp[0] = 10; //Affichage a
+ TimeDisp[1] = 11; //b
+ TimeDisp[2] = 12; //c
+ TimeDisp[3] = 13; //d
+ tm1637.display(TimeDisp);
+ delay(5000); //Pendant 5 sec
+ 
+ //Horloge mise à jour 2 fois par seconde pour faire clignotter le :
+ Timer1.initialize(500000); // timing pour 500ms
+ Timer1.attachInterrupt(TimingISR); //declare l'interruption qui déclenche TimingISR 
+}
+void loop()
+{
+   if(Update == ON)
+   {
+   TimeUpdate();
+   tm1637.display(TimeDisp);
+   }
+  }
+    void TimingISR()
+  {
+   halfsecond ++;
+   Update = ON;
+   if(halfsecond == 2){
+   second ++;
+     if(second == 60)
+   {
+     minute ++;
+     if(minute == 60)
+     {
+       hour ++;
+       if(hour == 24)hour = 0;
+       minute = 0;
+     }
+       second = 0;
+     }
+       halfsecond = 0; 
+     }
+      // Serial.println(second);
+       ClockPoint = (~ClockPoint) & 0x01;
+    }
+  void TimeUpdate(void)
+{
+       if(ClockPoint)tm1637.point(POINT_ON);
+       else tm1637.point(POINT_OFF); 
+       if (hhmm==0)
+         {
+           TimeDisp[0] = hour / 10; //Affichage hh:mm
+           TimeDisp[1] = hour % 10;
+           TimeDisp[2] = minute / 10;
+           TimeDisp[3] = minute % 10;
+         }
+     else
+       {
+         //Affichage mm:ss
+         TimeDisp[0] = minute / 10; //Affichage hh:mm
+         TimeDisp[1] = minute % 10;
+         TimeDisp[2] = second / 10;
+         TimeDisp[3] = second % 10; 
+       }
+     Update = OFF;
+}
+
+
+-----------------------------------------------------------------------------------------
+
+
+#include <EEPROM.h>
+#include <TimerOne.h>
+#include <avr/pgmspace.h>
+#include "TM1637.h" //Le driver TM1637 de l afficheur 7 segments
+#define ON 1
+#define OFF 0
+int8_t TimeDisp[] = {0x00,0x00,0x00,0x00}; //Tableau des 4 chiffres
+unsigned char ClockPoint = 1;
+unsigned char Update;
+unsigned char microsecond_10 = 0;
+unsigned char second;
+unsigned char _microsecond_10 = 0;
+unsigned char _second;
+unsigned int eepromaddr;
+boolean Flag_ReadTime;
+// branchement I2C sur CLK -> pinA5 et DIO -->Pin A4
+#define CLK A5 
+#define DIO A4
+TM1637 tm1637(CLK,DIO); //Objet tm1637
+void setup()
+{
+ Serial.begin(9600);
+ //Regler la brillance
+ //tm1637.set(BRIGHT_TYPICAL); //BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+ tm1637.set(2); //0 éclairage faible réglable jusqu"à 7 le plus intense
+ tm1637.init();
+ Timer1.initialize(10000);//timing pour 10ms
+ 
+ Timer1.attachInterrupt(TimingISR);//declare l'interruption routine:TimingISR 
+ Serial.println("Envoi de commande du chronometre:");
+ Serial.println("S - Start");
+ Serial.println("P - Pause");
+ Serial.println("L - List the time");
+ Serial.println("W - Write the time to EEPROM ");
+ Serial.println("R - Reset");
+}
+void loop()
+{
+ char command;
+ command = Serial.read(); //Lire lacommande tapée au clavier
+ switch(command)
+ {
+ case 'S':stopwatchStart();Serial.println("Start timing...");break;
+ case 'P':stopwatchPause();Serial.println("Stopwatch was paused");break;
+ case 'L':readTime();break;
+ case 'W':saveTime();Serial.println("Save the time");break;
+ case 'R':stopwatchReset();Serial.println("Stopwatch was reset");break;
+ default:break;
+ }
+ if(Update == ON)
+ {
+ TimeUpdate();
+ tm1637.display(TimeDisp);
+ }
+}
+//************************************************
+void TimingISR()
+{
+ microsecond_10 ++;
+ Update = ON;
+ if(microsecond_10 == 100){
+ second ++;
+ if(second == 60)
+ {
+ second = 0;
+ }
+ microsecond_10 = 0; 
+ }
+ ClockPoint = (~ClockPoint) & 0x01;
+ if(Flag_ReadTime == 0)
+ {
+ _microsecond_10 = microsecond_10;
+ _second = second;
+ }
+}
+void TimeUpdate(void)
+{
+ if(ClockPoint)tm1637.point(POINT_ON);//POINT_ON = 1,POINT_OFF = 0;
+ else tm1637.point(POINT_ON); 
+ TimeDisp[2] = _microsecond_10 / 10;
+ TimeDisp[3] = _microsecond_10 % 10;
+ TimeDisp[0] = _second / 10;
+ TimeDisp[1] = _second % 10;
+ Update = OFF;
+}
+void stopwatchStart() // timer1 on
+{
+  Flag_ReadTime = 0;
+  Timer1.start(); // démarre le timer
+}
+void stopwatchPause() // timer1 off
+{
+  Timer1.stop(); // arrête le timer
+}
+void stopwatchReset()
+{
+ stopwatchPause();
+ Flag_ReadTime = 0;
+ _microsecond_10 = 0;
+ _second = 0;
+ microsecond_10 = 0;
+ second = 0;
+ Update = ON;
+}
+void saveTime()
+{
+ EEPROM.write(eepromaddr ++,microsecond_10);
+ EEPROM.write(eepromaddr ++,second);
+}
+void readTime()
+{
+ Flag_ReadTime = 1;
+ if(eepromaddr == 0)
+ {
+ Serial.println("The time had been read");
+ _microsecond_10 = 0;
+ _second = 0;
+ }
+ else{
+ _second = EEPROM.read(-- eepromaddr);
+ _microsecond_10 = EEPROM.read(-- eepromaddr);
+ Serial.println("List the time");
+ }
+ Update = ON;
+}
