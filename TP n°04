@@ -213,3 +213,165 @@ void readTime()
  }
  Update = ON;
 }
+
+
+
+-------------------------------------------------------------------------------------
+
+
+
+#include <EEPROM.h>
+#include <TimerOne.h>
+#include <avr/pgmspace.h>
+#include "TM1637.h"
+
+#define ON 1
+#define OFF 0
+
+int8_t TimeDisp[] = {0x00, 0x00, 0x00, 0x00};
+unsigned char ClockPoint = 1;
+unsigned char Update;
+
+unsigned char second = 0;
+unsigned char minute = 0;
+unsigned char hour = 0;
+
+unsigned int eepromaddr;
+boolean Flag_ReadTime;
+
+// branchement I2C sur CLK -> pinA5 et DIO -->Pin A4
+#define CLK A5 
+#define DIO A4
+TM1637 tm1637(CLK, DIO);
+
+void setup() {
+  Serial.begin(9600);
+  tm1637.set(2);
+  tm1637.init();
+
+  // Interruption toutes les 1 seconde (1 000 000 µs)
+  Timer1.initialize(1000000);
+  Timer1.attachInterrupt(TimingISR);
+
+  Serial.println("Commandes du chronomètre :");
+  Serial.println("S - Start");
+  Serial.println("P - Pause");
+  Serial.println("L - Lire le temps");
+  Serial.println("W - Sauver dans l'EEPROM");
+  Serial.println("M - Modifier le temps");
+  Serial.println("R - Reset");
+}
+
+void loop() {
+  char command = Serial.read();
+
+  switch (command) {
+    case 'S': stopwatchStart(); Serial.println("Start timing..."); break;
+    case 'P': stopwatchPause(); Serial.println("Paused"); break;
+    case 'L': readTime(); break;
+    case 'W': saveTime(); Serial.println("Saved"); break;
+    case 'R': stopwatchReset(); Serial.println("Reset"); break;
+    case 'M': modifyTime(); break; // 
+  }
+
+  if (Update == ON) {
+    TimeUpdate();
+    tm1637.display(TimeDisp);
+  }
+}
+
+//************************************************
+void TimingISR() {
+  second++;
+  if (second == 60) {
+    second = 0;
+    minute++;
+    if (minute == 60) {
+      minute = 0;
+      hour++;
+      if (hour == 24) {
+        hour = 0; // cycle sur 24h
+      }
+    }
+  }
+  Update = ON;
+  ClockPoint = (~ClockPoint) & 0x01;
+}
+
+void TimeUpdate(void) {
+  if (ClockPoint) tm1637.point(POINT_ON);
+  else tm1637.point(POINT_OFF);
+
+  TimeDisp[2] = hour / 10;
+  TimeDisp[3] = hour % 10;
+  TimeDisp[0] = minute / 10;
+  TimeDisp[1] = minute % 10;
+
+  Update = OFF;
+}
+
+void stopwatchStart() {
+  Timer1.start();
+}
+
+void stopwatchPause() {
+  Timer1.stop();
+}
+
+void stopwatchReset() {
+  stopwatchPause();
+  hour = 0;
+  minute = 0;
+  second = 0;
+  Update = ON;
+}
+
+void saveTime() {
+  EEPROM.write(eepromaddr++, hour);
+  EEPROM.write(eepromaddr++, minute);
+  EEPROM.write(eepromaddr++, second);
+}
+
+void readTime() {
+  Flag_ReadTime = 1;
+  if (eepromaddr == 0) {
+    Serial.println("Aucune donnée en EEPROM");
+    hour = 0;
+    minute = 0;
+    second = 0;
+  } else {
+    second = EEPROM.read(--eepromaddr);
+    minute = EEPROM.read(--eepromaddr);
+    hour = EEPROM.read(--eepromaddr);
+    Serial.println("Temps restauré depuis EEPROM");
+  }
+  Update = ON;
+}
+
+void modifyTime() {
+  stopwatchPause(); // on arrête le chrono pendant la modification
+  
+  Serial.println("=== Modification du temps ===");
+  
+  Serial.println("Entrez l'heure (0-23) : ");
+  while (Serial.available() == 0);
+  hour = Serial.parseInt();
+  hour = constrain(hour, 0, 23);
+
+  Serial.println("Entrez les minutes (0-59) : ");
+  while (Serial.available() == 0);
+  minute = Serial.parseInt();
+  minute = constrain(minute, 0, 59);
+  
+  Serial.println("Entrez les secondes (0-59) : ");
+  while (Serial.available() == 0);
+  second = Serial.parseInt();
+  second = constrain(second, 0, 59);
+  
+  Serial.print("Nouveau temps défini à : ");
+  Serial.print(hour); Serial.print(":");
+  Serial.print(minute); Serial.print(":");
+  Serial.println(second);
+
+  Update = ON;
+}
