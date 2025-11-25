@@ -37,3 +37,31 @@ void loop() {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
+#include <SoftwareSerial.h>
+#include <Servo.h>
+Servo myservo;
+int pos = 0;
+// Crée un port série virtuel sur les broches 2 et 3
+SoftwareSerial BTSerial(4, 6); // RX, TX
+void setup() {
+ // Démarre la communication série avec l'ordinateur
+ Serial.begin(9600);
+ pinMode(13, OUTPUT);
+ // Démarre la communication série avec le module Bluetooth
+ BTSerial.begin(9600);
+ Serial.println("Prêt pour la communication Bluetooth!");
+}
+void loop() {
+ // Vérifie s'il y a des données reçues par le Bluetooth
+ if (BTSerial.available()) {
+ char c = BTSerial.read();
+    Serial.write(c); // Envoie les données au moniteur série
+    pos = c ;
+    Serial.print(c);
+ }
+ // Vérifie s'il y a des données envoyées depuis le moniteur série
+ if (Serial.available()) {
+ char c = Serial.read();
+ BTSerial.write(c); // Envoie les données au module Bluetooth
+ }
+}
