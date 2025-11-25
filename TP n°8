@@ -1,0 +1,39 @@
+1 - On peut envoyer ou recevoir tous les caractère unicode 
+2 - Le problème que j'ai rencontrer lors de la configuration est un conflit car les ports utilisé comme le pin 0 et le pin 1 sont utilisé pour l'USB
+3 - J'ai résolue le problème en changeant le branchement en mettant Rxd sur le pin 6 et Txd sur le pin 4.
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+#include <SoftwareSerial.h>
+// Crée un port série virtuel sur les broches 2 et 3
+SoftwareSerial BTSerial(4, 6); // RX, TX
+void setup() {
+ // Démarre la communication série avec l'ordinateur
+ Serial.begin(9600);
+ pinMode(13, OUTPUT);
+ // Démarre la communication série avec le module Bluetooth
+ BTSerial.begin(9600);
+ Serial.println("Prêt pour la communication Bluetooth!");
+}
+void loop() {
+ // Vérifie s'il y a des données reçues par le Bluetooth
+ if (BTSerial.available()) {
+ char c = BTSerial.read();
+    Serial.write(c); // Envoie les données au moniteur série
+    if (c == "1") digitalWrite(13, HIGH);
+    if (c == "0") digitalWrite(13, LOW);
+    Serial.print(c);
+ }
+ // Vérifie s'il y a des données envoyées depuis le moniteur série
+ if (Serial.available()) {
+ char c = Serial.read();
+ BTSerial.write(c); // Envoie les données au module Bluetooth
+ }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
