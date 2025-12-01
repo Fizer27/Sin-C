@@ -22,8 +22,8 @@ void loop() {
  if (BTSerial.available()) {
  char c = BTSerial.read();
     Serial.write(c); // Envoie les données au moniteur série
-    if (c == "1") digitalWrite(13, HIGH);
-    if (c == "0") digitalWrite(13, LOW);
+    if (c == '1') digitalWrite(13, HIGH);
+    if (c == '0') digitalWrite(13, LOW);
     Serial.print(c);
  }
  // Vérifie s'il y a des données envoyées depuis le moniteur série
@@ -46,6 +46,7 @@ SoftwareSerial BTSerial(4, 6); // RX, TX
 void setup() {
  // Démarre la communication série avec l'ordinateur
  Serial.begin(9600);
+ myservo.attach(10);
  pinMode(13, OUTPUT);
  // Démarre la communication série avec le module Bluetooth
  BTSerial.begin(9600);
@@ -56,12 +57,37 @@ void loop() {
  if (BTSerial.available()) {
  char c = BTSerial.read();
     Serial.write(c); // Envoie les données au moniteur série
-    pos = c ;
-    Serial.print(c);
- }
+
+    
+    if (c == '1') {
+    digitalWrite(13, HIGH);
+    for(pos = 0; pos < 180; pos += 1)
+    {
+       myservo.write(pos);
+       delay(10);
+    }
+    }
+    
+    if (c == '0') {
+      digitalWrite(13, LOW);
+    
+    for(pos = 180; pos>=1; pos-=1)
+    {
+       myservo.write(pos);
+       delay(10);
+    }
+    }
+    
  // Vérifie s'il y a des données envoyées depuis le moniteur série
  if (Serial.available()) {
  char c = Serial.read();
  BTSerial.write(c); // Envoie les données au module Bluetooth
  }
 }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+3)
+ la portée de la connexion Bluetooth est entre 20m a 30m .
