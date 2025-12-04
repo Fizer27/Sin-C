@@ -19,3 +19,55 @@ void loop() {
  }
  delay(500); // Attendre un moment avant de lire à nouveau
 }
+
+
+///////////////////////////////////////////////////////////
+
+2.
+
+// Définir les broches
+const int motionPin = 2; // Broche numérique pour la sortie du module
+const int ledPin = 13;
+const int ledPin2 = 10;
+void setup() {
+ pinMode(ledPin2, OUTPUT);
+ pinMode(motionPin, INPUT); // Initialiser la broche connecté au capteur comme qu'entrée
+ pinMode(ledPin, OUTPUT);
+ Serial.begin(9600); // Initialiser la communication série pour le débogage
+}
+void loop() {
+ // Lire la valeur du capteur de mouvement
+ int motionDetected = digitalRead(motionPin); // Lire la valeur du capteur de mouvement
+ Serial.print("Détection de mouvement : "); //La valeur du capteur sur le moniteur serie
+ if (motionDetected == HIGH) {
+ Serial.println("Mouvement détecté !");
+ digitalWrite(ledPin, LOW); // Allumer la LED si mouvement détecté
+ } else {
+ Serial.println("Aucun mouvement.");
+ digitalWrite(ledPin, LOW); // Éteindre la LED si aucun mouvement
+ }
+
+if (motionDetected == LOW)
+{
+    delay(2000);
+ digitalWrite(ledPin2, HIGH); // Allumer la LED si mouvement détecté
+    }
+if (motionDetected == HIGH){
+ {
+ digitalWrite(ledPin2, HIGH); // Éteindre la LED si aucun mouvement
+ delay(1000);
+ digitalWrite(ledPin2, LOW);
+ delay(1000);
+ }
+ }
+ delay(500); // Attendre un moment avant de lire à nouveau
+}
+
+
+///////////////////////////////////////////////////////////////////////
+
+3.
+
+
+
+
