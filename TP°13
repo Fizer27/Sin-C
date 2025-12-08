@@ -68,6 +68,51 @@ if (motionDetected == HIGH){
 
 3.
 
+const int motionPin = 2;
+const int ledMotion = 13;
+const int ledInactive = 10;
+
+unsigned long lastMotionTime = 0;
+
+void setup() {
+  pinMode(motionPin, INPUT);
+  pinMode(ledMotion, OUTPUT);
+  pinMode(ledInactive, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  int motion = digitalRead(motionPin);
+
+  if (motion == HIGH) {
+    Serial.println("Mouvement détecté !");
+    lastMotionTime = millis();  
+
+    digitalWrite(ledMotion, HIGH);
+    delay(500);
+    digitalWrite(ledMotion, LOW);
+    delay(500);
+    digitalWrite(ledMotion, HIGH);
+    delay(500);
+    digitalWrite(ledMotion, LOW);
+    delay(500);
+
+    delay(5000);
+
+    return;
+  }
+
+  Serial.println("Aucun mouvement");
+
+  if (millis() - lastMotionTime > 10000) {
+    digitalWrite(ledInactive, HIGH);   // Indique inactivité
+  } else {
+    digitalWrite(ledInactive, LOW);
+  }
+
+  delay(200);
+}
 
 
 
