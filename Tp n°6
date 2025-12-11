@@ -7,20 +7,25 @@ Exercice 3 : le programme permet de vérifié si l'UID présenté correspond a u
 ///////////////////////////////////////////////////////////////////////////////
 
 
-2-
-
+1-2-3
 
 #include <SPI.h>
 #include <MFRC522.h>
 #define SS_PIN 10 //Definition des broches
 #define RST_PIN 9
+#include <Servo.h>
+Servo myservo;
 MFRC522 mfrc522(SS_PIN, RST_PIN); // definition des broches du RC522
 char st[20];
+const int Led = 7;
 void setup() 
 {
  //initialisation serie et initialisation des deux bibliotheque SPI et MFRC522
  Serial.begin(9600);
+ pinMode(Led, OUTPUT);
  SPI.begin();
+ myservo.attach(6);
+ myservo.write(0);  
  mfrc522.PCD_Init(); 
  Serial.println("Test acces via TAG RFID");
  Serial.println();
@@ -61,6 +66,13 @@ else if (tag.substring(1) == "57 18 7C 34")
  { 
  Serial.println("allume les leds en vert");
  Serial.println(); 
+ digitalWrite(Led, HIGH);
+ delay(1000);
+ digitalWrite(Led, LOW);
+ delay(1000);
+ digitalWrite(Led, HIGH);
+ delay(1000);
+ digitalWrite(Led, LOW);
  delay(3000);
  }
 
@@ -69,6 +81,7 @@ else if (tag.substring(1) == "57 18 7C 34")
  { 
  Serial.println("allume les leds en Jaune");
  Serial.println(); 
+ myservo.write(90);
  delay(3000);
  }
 
@@ -77,6 +90,7 @@ else if (tag.substring(1) == "57 18 7C 34")
  { 
  Serial.println("allume les leds en Rouge");
  Serial.println(); 
+ myservo.write(180);
  delay(3000);
  }
 
@@ -84,7 +98,8 @@ else if (tag.substring(1) == "57 18 7C 34")
  else if (tag.substring(1) == "FF 4D C8 49") 
  { 
  Serial.println("allume les leds en Bleu");
- Serial.println(); 
+ Serial.println();
+ myservo.write(0); 
  delay(3000);
  }
 
@@ -98,6 +113,3 @@ else if (tag.substring(1) == "57 18 7C 34")
  }
  delay(1000);
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
