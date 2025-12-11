@@ -1,0 +1,103 @@
+Exercice 1 : le programme permet de capter l'adresse ip d'une carte/badge et de l'envoyer dans la console 
+
+Exercice 2 : le programme d'affiche dans la cosole l'UID et tout le contenu mémoire d'une carte/badge.
+
+Exercice 3 : le programme permet de vérifié si l'UID présenté correspond a un badge connu il autorise l'acces sic'est le cas sinon il refuse l'acces.
+
+///////////////////////////////////////////////////////////////////////////////
+
+
+2-
+
+
+#include <SPI.h>
+#include <MFRC522.h>
+#define SS_PIN 10 //Definition des broches
+#define RST_PIN 9
+MFRC522 mfrc522(SS_PIN, RST_PIN); // definition des broches du RC522
+char st[20];
+void setup() 
+{
+ //initialisation serie et initialisation des deux bibliotheque SPI et MFRC522
+ Serial.begin(9600);
+ SPI.begin();
+ mfrc522.PCD_Init(); 
+ Serial.println("Test acces via TAG RFID");
+ Serial.println();
+}
+void loop() // le corp de notre programme
+{
+ if ( ! mfrc522.PICC_IsNewCardPresent()) 
+ {
+ return;
+ }
+ if ( ! mfrc522.PICC_ReadCardSerial()) 
+ {
+ return;
+ }
+ Serial.print("UID de tag :");
+ String tag= "";
+ byte caractere;
+ for (byte i = 0; i < mfrc522.uid.size; i++) 
+ {
+ Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+ Serial.print(mfrc522.uid.uidByte[i], HEX);
+ tag.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+ tag.concat(String(mfrc522.uid.uidByte[i], HEX));
+ }
+ Serial.println();
+ Serial.print("Message : ");
+ tag.toUpperCase();
+ 
+// ici on va vérifier l'autorisation
+ if (tag.substring(1) == "06 62 20 02") // le numero de tag est visible lorsqu on presente le badge via 
+ { 
+ Serial.println("TAG verifie - Acces Autorise !");
+ Serial.println();
+ delay(3000);
+ }
+ // ici on va vérifier un second badge (il est possible d'ajouter plusieurs "else if" il peut être 
+else if (tag.substring(1) == "57 18 7C 34") 
+ { 
+ Serial.println("allume les leds en vert");
+ Serial.println(); 
+ delay(3000);
+ }
+
+ 
+ else if (tag.substring(1) == "3C 80 AD 49") 
+ { 
+ Serial.println("allume les leds en Jaune");
+ Serial.println(); 
+ delay(3000);
+ }
+
+ 
+ else if (tag.substring(1) == "96 AE C7 49") 
+ { 
+ Serial.println("allume les leds en Rouge");
+ Serial.println(); 
+ delay(3000);
+ }
+
+
+ else if (tag.substring(1) == "FF 4D C8 49") 
+ { 
+ Serial.println("allume les leds en Bleu");
+ Serial.println(); 
+ delay(3000);
+ }
+
+ 
+ else
+ //sinon si le Tag n'est pas valide
+ {
+ //on affiche Acces refuse !!!
+ Serial.println("TAG inconnu - Acces refuse !!!");
+ Serial.println();
+ }
+ delay(1000);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
