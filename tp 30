@@ -1,0 +1,40 @@
+#include <DHT.h>
+#include "TM1637.h"
+
+#define CLK 2
+#define DIO 3
+#define DHTPIN 4
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
+TM1637 tm1637(CLK, DIO);
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+
+  tm1637.init();
+  tm1637.set(7); // luminosité max
+}
+
+void loop() {
+
+  float temp = dht.readTemperature();
+
+  if (isnan(temp)) {
+    Serial.println("Erreur lecture DHT22");
+    return;
+  }
+
+  Serial.print("Température : ");
+  Serial.println(temp);
+
+  int t = (int)temp;
+
+  tm1637.display(0, t / 10);
+  tm1637.display(1, t % 10);
+  tm1637.display(2, 12); // C
+  tm1637.display(3, 12);
+
+  delay(2000);
+}
